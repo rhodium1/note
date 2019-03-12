@@ -41,3 +41,107 @@ class MyClass {
 
 [1, 2, 3] instanceof new MyClass() // true
 ```
+## Symbol.isConcatSpreadable
+表示concat时是否可以展开
+```javascript
+let arr1 = ['c', 'd'];
+['a', 'b'].concat(arr1, 'e') // ['a', 'b', 'c', 'd', 'e']
+arr1[Symbol.isConcatSpreadable] // undefined
+let arr2 = ['c', 'd'];
+arr2[Symbol.isConcatSpreadable] = false;
+['a', 'b'].concat(arr2, 'e') // ['a', 'b', ['c','d'], 'e']
+```
+当需要concat的是一个类数组对象时：
+```javascript
+let obj = {length:2, 0:'a', 1:'b'};
+obj[Symbol.isConcatSpreadable] = true;
+[].concat(obj); //['a', 'b'];
+```
+## Symbol.species
+解决了衍生对象创建的问题
+``` javascript
+class MyArray extends Array {
+}
+
+const a = new MyArray(1, 2, 3);
+const b = a.map(x => x);
+const c = a.filter(x => x > 1);
+
+b instanceof MyArray // true
+c instanceof MyArray // true
+```
+如果指定了`species`:
+```javascript
+class MyArray extends Array{
+    static get [Symbol.species](){return Array;}
+}
+const a = new MyArray();
+const b = a.map(x => x);
+
+b instanceof MyArray // false
+b instanceof Array // true
+```
+## Symbol.match
+指向一个函数，当被匹配时，调用该函数，返回返回值
+```javascript {cmd='node'}
+class MyClass{
+    [Symbol.match](){
+        console.log(arguments);
+    }
+}
+let a = new MyClass();
+'a'.match(a);
+```
+类似的还有`Symbol.replace`, `Symbol.search`, `Symbol.split`
+
+## Symbol.iterator
+指向该对象的默认遍历器方法
+```javascript {cmd='node'}
+let obj = {};
+obj[Symbol.iterator] = function*(){
+    yield 1;
+    yield 2;
+    yield 3;
+};
+console.log([...obj]);
+```
+## Symbol.toPrimitive
+如果有该方法，则当需要将对象转换成原始类型时调用该方法。此方法传入一个参数表示在什么环境下转换
+1. number: 需要转化成数值
+2. string: 需要转换成字符串
+3. default: 可以成字符也可以成数值
+```javascript {cmd='node'}
+let obj = {
+  [Symbol.toPrimitive](hint) {
+    switch (hint) {
+      case 'number':
+        return 123;
+      case 'string':
+        return 'str';
+      case 'default':
+        return 'default';
+      default:
+        throw new Error();
+     }
+   }
+};
+console.log(obj < 124);
+console.log(obj + 1);
+console.log(String(obj));
+```
+
+## Symbol.toStringTag
+如果有改属性，则出现在toString后的标志中
+```javascript {cmd='node'}
+console.log(({[Symbol.toStringTag]: 'Foo'}.toString()));
+let arr = [1,2,4];
+arr[Symbol.toStringTag] = 'foo';
+console.log(Object.prototype.toString.call(arr));
+```
+
+## Symbol.unscopables
+对象的`Symbol.unscopables`属性，指向一个对象。该对象指定了使用with关键字时，哪些属性会被with环境排除。
+
+
+
+
